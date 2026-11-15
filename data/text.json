@@ -1,0 +1,456 @@
+{
+  "_readme": "All player-facing text lives here. Edit freely. {placeholders} are filled in by the game; see README.md for the list. A value can be a single string or a list of strings (a list is shown as separate paragraphs).",
+
+  "game": {
+    "title": "WHITEWELL",
+    "subtitle": "Chips, quotas and export controls",
+    "company": "NVIDEO",
+    "intro": [
+      "It is {month} {year}. {company} is worth more than most countries, and every AI lab on Earth wants its new Whitewell GPUs.",
+      "You are {name}, senior operations manager for {company} Asia-Pacific. Every month the fabs in {home} hand you a batch of chips. Your job is to get them to customers.",
+      "Each quarter you have a revenue target. Hit it and you earn a bonus. Miss {strikes} in a row and you're fired.",
+      "Washington gets angrier every month. When the doom meter reaches {doomMax}, the national-security establishment forces {company}'s CEO to resign, the new boss shuts down your division, and the game is over. Smuggling gets you noticed and brings that day closer. Earn as much bonus as you can before it comes."
+    ]
+  },
+
+  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+
+  "ui": {
+    "currency": "$",
+    "thousands": "k",
+    "millions": "M",
+    "itemFormat": "{qty} {good}",
+    "listSeparator": ", ",
+    "nothing": "nothing",
+    "quarterFormat": "Q{n} {year}",
+    "restartConfirm": "Abandon this game and start over?",
+    "status": {
+      "who": "{name} · {company}",
+      "date": "{month} {year}",
+      "location": "Location",
+      "quarter": "Quarter",
+      "bonus": "Bonus",
+      "cargo": "Cargo",
+      "warehouse": "Warehouse",
+      "heat": "Scrutiny",
+      "doom": "Doom",
+      "profile": "Profile"
+    },
+    "buttons": {
+      "newGame": "New game",
+      "continueGame": "Continue",
+      "highScores": "High scores",
+      "back": "Back",
+      "cancel": "Cancel",
+      "ok": "OK",
+      "max": "Max",
+      "continue": "Continue",
+      "sell": "Sell",
+      "sellAll": "Sell all",
+      "load": "Load",
+      "loadAll": "Load all",
+      "unload": "Unload",
+      "travel": "Travel",
+      "performance": "Performance",
+      "regulations": "Regulations",
+      "news": "News",
+      "help": "Help",
+      "resign": "Resign",
+      "yes": "Yes",
+      "no": "No",
+      "restart": "Restart"
+    },
+    "table": {
+      "good": "Chip",
+      "price": "Price",
+      "status": "Status",
+      "cargo": "Cargo",
+      "warehouse": "Warehouse",
+      "port": "City",
+      "customs": "BIS checks",
+      "bribery": "Fixers",
+      "quarter": "Quarter",
+      "net": "Net revenue",
+      "target": "Target",
+      "bonus": "Bonus"
+    },
+    "tips": {
+      "heat": "Scrutiny: how closely BIS watches you personally. Scrutiny rises when you're caught trying to ship banned chips, and even more if your fixer fails. The higher it is, the more often BIS checks you, everywhere, and the less your fixers can do. Now {heat} of {heatMax}.",
+      "doom": "Doom meter: how angry Washington is. Now {doom} of {doomMax}, so the climate is {climate} and BIS penalties are ×{mult}. Random events move the meter. Every time BIS confiscates banned chips, it rises {points}. At {doomMax}, {company}'s CEO is forced to resign and the game ends.",
+      "profile": "Profile: how visible your smuggling is in Washington. Every banned chip you sell and every confiscation raises it, and it never goes down. Right now it makes the hawks push the doom meter up ×{hawks} as hard. Now {profile} of {profileMax}."
+    }
+  },
+
+  "setup": { "namePrompt": "What's your name?", "defaultName": "Morgan Lee", "startPrompt": "Pick your assignment:" },
+
+  "startOptions": {
+    "steady": { "name": "Steady region", "description": "Quarterly targets start at {target}. You can carry {capacity} units per trip." },
+    "stretch": {
+      "name": "Stretch goals (hard)",
+      "description": "Quarterly targets start at {target}, but bonuses are {multiplier}× bigger. You can carry {capacity} units per trip."
+    }
+  },
+
+  "ports": {
+    "hsinchu": {
+      "name": "Hsinchu",
+      "description": "Home base, next to the fabs. They churn out new chips every month. You can sell to channel partners here, but the price won't be great."
+    },
+    "singapore": { "name": "Singapore", "description": "Full of data centres. Rich. The government does not intentionally help China evade U.S. export controls." },
+    "kualalumpur": { "name": "Kuala Lumpur", "description": "Malaysia's capital is building data centres as fast as it can pour concrete. Maybe they're building a national AI champion. That would explain the demand." },
+    "johor": { "name": "Johor Bahru", "description": "Just across the causeway from Singapore. Data-centre cranes everywhere. Don't ask too many questions about the buyers." },
+    "shenzhen": { "name": "Shenzhen", "description": "Electronics capital of the world. The gray market pays a fortune for Whitewell." },
+    "shanghai": { "name": "Shanghai", "description": "Cloud giants with deep pockets. BIS inspectors are on the ground." },
+    "beijing": { "name": "Beijing", "description": "AI labs desperate for compute, and the busiest US export-control office in Asia." }
+  },
+
+  "goods": {
+    "whitewell": { "name": "Whitewell", "short": "White" },
+    "z200": { "name": "Z200", "short": "Z200" },
+    "z20": { "name": "Z20", "short": "Z20" },
+    "riptide": { "name": "Riptide 4090", "short": "4090" }
+  },
+
+  "legality": { "legal": "Legal", "restricted": "License needed", "contraband": "BANNED" },
+
+  "customsLevels": {
+    "none": "None (agents gone)",
+    "lax": "Rare",
+    "normal": "Occasional",
+    "strict": "Frequent",
+    "crackdown": "Constant",
+    "closed": "CLOSED"
+  },
+
+  "briberyLevels": ["Useless", "Long shot", "Iffy", "Decent"],
+
+  "climate": {
+    "levels": {
+      "thaw": { "name": "Thaw" },
+      "calm": { "name": "Calm" },
+      "tense": { "name": "Tense" },
+      "crackdown": { "name": "Crackdown" },
+      "chipwar": { "name": "Chip war" }
+    }
+  },
+
+  "doom": {
+    "up": "Doom meter +{points}: now {doom} of {doomMax} ({climate}).",
+    "upHawks": "Doom meter +{points}, hawks ×{hawks} because of your profile: now {doom} of {doomMax} ({climate}).",
+    "down": "Doom meter -{points}: now {doom} of {doomMax} ({climate}).",
+    "status": "Political climate: {climate}. Doom meter {doom} of {doomMax}. BIS penalties are ×{mult} normal. Your profile makes Washington's hawks ×{hawks} as aggressive. At {doomMax}, {company}'s CEO is forced to resign and the game ends."
+  },
+
+  "port": {
+    "customs": "BIS end-use checks here: {level}.",
+    "home": "Warehouse: {used} of {capacity} units. New production arrives every month.",
+    "changedNote": "* changed by recent events (see News)",
+    "localNews": "Local news:"
+  },
+
+  "sell": {
+    "title": "What will you sell?",
+    "option": "{good}: {price} each (you have {qty})",
+    "homeNote": "In {home}, sales come out of the warehouse first, then your cargo.",
+    "nothing": "You have nothing to sell.",
+    "qtyPrompt": "Sell how many {good}? {price} each, you have {max}.",
+    "done": "Sold {qty} {good} for {amount}.",
+    "allDone": "Sold all your cargo for {amount}.",
+    "profileUp": "Word gets around Washington: profile +{points}."
+  },
+
+  "load": {
+    "title": "Load what?",
+    "info": "Cargo space free: {free} of {capacity} units.",
+    "option": "{good} (in warehouse: {qty})",
+    "qtyPrompt": "Load how many {good}? (max {max})",
+    "allDone": "Loaded {qty} units, most valuable first.",
+    "done": "Loaded {qty} {good}."
+  },
+
+  "unload": {
+    "title": "Unload what?",
+    "info": "Warehouse space free: {free} units.",
+    "option": "{good} (in cargo: {qty})",
+    "qtyPrompt": "Unload how many {good}? (max {max})",
+    "done": "Unloaded {qty} {good}."
+  },
+
+  "travel": {
+    "title": "Where to?",
+    "cost": "A trip out costs {cost} in freight, charged to this quarter, and takes a month. Flying back to {home} is quick and free.",
+    "option": "{port} (BIS checks: {level})",
+    "home": "{port}: return home, no time or cost",
+    "risk": { "restricted": "! some cargo needs a license here", "contraband": "! you're carrying BANNED chips" }
+  },
+
+  "performance": {
+    "title": "Performance",
+    "current": "This quarter ({quarter}): sales {sales}, costs {costs}, net revenue {net}. Target: {target}. Months left, including this one: {n}.",
+    "onNotice": "You missed last quarter's target. Miss {n} more in a row and you're fired.",
+    "rules": "Hit the target and your bonus is {on}% of it, plus {over}% of everything above it. Each quarter's target is {growth}% higher than the last. Costs are freight, BIS penalties, fixers' fees and anything else charged to the quarter.",
+    "none": "No quarters finished yet.",
+    "missed": "missed",
+    "total": "Total bonus so far: {bonus}"
+  },
+
+  "quarter": {
+    "kicker": "QUARTERLY REVIEW: {quarter}",
+    "metTitle": "Target met",
+    "missedTitle": "Target MISSED",
+    "numbers": "Sales {sales} minus costs {costs} gives net revenue of {net}. The target was {target}.",
+    "met": "Your bonus this quarter: {bonus}.",
+    "missed": "No bonus this quarter. Your VP books a \"quick chat\".",
+    "warning": "You're on notice. Miss {n} more in a row and you're fired.",
+    "next": "Next quarter's target: {next}."
+  },
+
+  "regulations": {
+    "title": "Export Rules",
+    "intro": "What each city allows right now. How often BIS checks you includes your scrutiny.",
+    "short": { "legal": "ok", "restricted": "lic", "contraband": "BAN" },
+    "legend": [
+      "ok: legal. BIS doesn't care.",
+      "lic: needs a US export license. You can't apply for one. Washington grants licenses on a whim; if it ever does, you'll see it in the News. Until then, if BIS checks you, you pay a penalty but keep the chips.",
+      "BAN: banned. If BIS checks you, the chips are confiscated and you pay a penalty. Sells for far more."
+    ]
+  },
+
+  "news": {
+    "title": "Newswire",
+    "active": "In effect now:",
+    "noActive": "Nothing unusual is in effect.",
+    "recent": "Recent headlines:",
+    "none": "No news yet.",
+    "monthsLeft": "{months} mo. left",
+    "breaking": "BREAKING NEWS",
+    "update": "NEWS UPDATE"
+  },
+
+  "help": {
+    "title": "How to play",
+    "body": [
+      "You are {name}, senior operations manager for {company}. Every month the fabs in {home} put a batch of GPUs in your warehouse. You don't choose what gets made. You decide where it goes.",
+      "In {home}, load chips into your cargo and pick a city. The trip takes a month and costs freight. Sell them, then fly home for the next batch. If the warehouse fills up, the extra production goes to another region and you lose it. You can also sell straight from the warehouse in {home}, at a discount.",
+      "You have a quarterly revenue target. Your bonus increases the more you beat it. Miss {strikes} in a row and you're fired. Your score is your total bonus.",
+      "Older chips lose value every month.",
+      "Whitewell is banned in China, but buyers there pay a hefty premium for them. Z200 needs a US export license there. You can't apply for licenses: Washington grants them on a whim, and you'll see it in the News when it does. When you land, agents from the US Bureau of Industry and Security (BIS) may run an end-use check: banned chips are confiscated with a penalty, and unlicensed chips pay a penalty. You can cooperate or call your local fixer to try and make the problem go away.",
+      "The game ends when the doom meter reaches {doomMax}: Washington forces {company}'s CEO to resign, and the new boss shuts your division down. Political news moves the meter most months. BIS penalties grow as things heat up.",
+      "Smuggling speeds up the clock. Every time BIS confiscates banned chips pushes the doom meter up. Every banned chip you sell raises your profile in Washington. The higher your profile, the harder the hawks push the meter up.",
+      "Scrutiny is personal: how closely BIS watches you. It builds every time they confiscate chips or catch your fixer, makes checks more likely everywhere, and fades over time.",
+      "Export rules only get stricter. Every so often Commerce announces a new rule. Regulations and News list what's coming.",
+      "Political news also changes the rules: bans, licenses, crackdowns, closures and price swings. Check News and Regulations before you fly."
+    ]
+  },
+
+  "resign": { "confirm": "Resign now? You keep the {bonus} in bonuses you've earned." },
+
+  "voyage": { "arrive": "You arrive in {port}.", "diverted": "{dest} is CLOSED. Your shipment is diverted to {port}." },
+
+  "production": {
+    "report": "The fabs delivered {delivered} to the warehouse.",
+    "overflow": "The fabs delivered {delivered}. The warehouse was full, so {reallocated} went to another region instead."
+  },
+
+  "logistics": {
+    "theft": "THEFT! A truck goes missing between the airport and the buyer's warehouse. {qty} {good} gone.",
+    "rerouted": "TYPHOON! Your flight can't land in {dest} and is rerouted to {port}.",
+    "delay": "PAPERWORK ERROR! Your shipment sits on the tarmac for a week. Storage and handling fees: {cost}."
+  },
+
+  "market": {
+    "crash": "PRICE CRASH: Buyers in {port} are overstocked on {good}. The price is down to {price}.",
+    "spike": "SHORTAGE: {port} is desperate for {good}. The price is up to {price}."
+  },
+
+  "inspection": {
+    "clean": "END-USE CHECK! Agents from the US Commerce Department's Bureau of Industry and Security (BIS) compare every serial number with your export paperwork. Everything matches. Your scrutiny drops a little.",
+    "boarded": "END-USE CHECK! Export control officers from the US Commerce Department's Bureau of Industry and Security (BIS) want to know where your chips are going. In {port}, they open the crates and find:",
+    "contraband": "{qty} {good}: BANNED here. Confiscated, plus a {fine} penalty.",
+    "restricted": "{qty} {good}: no US export license. {fine} penalty.",
+    "climate": "The political climate is {climate}, so penalties are ×{mult} normal.",
+    "doomWarning": "Confiscated banned chips will make the news: doom meter +{points}. At {doomMax}, {company}'s CEO is forced out.",
+    "fixer": "Your fixer in {port}: {level}.",
+    "hints": [
+      "\"Not with these agents,\" your fixer says. \"They go strictly by the book. Don't even try.\"",
+      "Your fixer sighs. \"I can try. Don't get your hopes up.\"",
+      "Your fixer thinks something might be arranged. Doesn't seem very confident, though.",
+      "Your fixer grins. \"The escort officers owe me a favour.\" Better odds than most."
+    ],
+    "cooperate": "Cooperate",
+    "bribe": "Call your fixer ({bribe})",
+    "seized": "BIS confiscates {seized} and hits {company} with a {fine} penalty, charged to this quarter. Your name goes on a list.",
+    "dutyPaid": "{company} pays {fine} in license penalties, charged to this quarter.",
+    "bribeSuccess": "Your fixer spends {bribe} on the local escort officers, and the agents leave with a tidy set of the wrong serial numbers. Finance books it as regional advisory services.",
+    "bribeFailed": "The agents catch your fixer swapping the paperwork. Obstruction of a federal investigation. Fixer's fee lost: {bribe}. Confiscated: {seized}. Penalties: {fine}. Your scrutiny soars."
+  },
+
+  "offers": {
+    "freight": "A freight forwarder in {port} offers a bigger contract: {add} more units of cargo space for a one-time {price}, charged to this quarter. Bigger shipments cost more to fly.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "accepted": "Done. You can now carry {capacity} units."
+  },
+
+  "events": {
+    "senate_hearing": { "headline": "SENATE HEARING: Chip bosses grilled over GPUs turning up in China", "body": "Washington wants someone to blame." },
+    "chip_security_act": { "headline": "CHIP SECURITY ACT PASSES: Every advanced GPU must be tracked", "body": "BIS gets the money for more agents in Asia." },
+    "smuggling_ring": { "headline": "BUSTED: Singapore charges three men over GPU smuggling ring", "body": "Prosecutors say the chips went to China through shell companies." },
+    "think_tank_report": { "headline": "REPORT: Think tank says Chinese labs are training on smuggled chips", "body": "The report names no names. Yet." },
+    "hawk_appointed": { "headline": "NEW ADVISER: A noted China hawk joins the National Security Council", "body": "Her first briefing is titled \"Where are the chips going?\"" },
+    "trade_summit": { "headline": "SUMMIT: Leaders shake hands and promise \"stable trade\"", "body": "Nobody wants a fight this month." },
+    "tariff_truce": { "headline": "TRUCE: Washington and Beijing pause the chip war for 90 days", "body": "BIS agents have been told not to rock the boat." },
+    "lobbying_win": { "headline": "LOBBYING WIN: Chipmakers find new friends in Congress", "body": "A hearing on chip smuggling is quietly postponed." },
+    "z200_licenses": {
+      "headline": "LICENSES GRANTED: Z200 cleared for sale in China",
+      "body": "Commerce quietly approves Z200 exports. No license problems for {months} months.",
+      "end": "The Z200 export approvals expire. The old rules are back."
+    },
+    "bis_china_surge": {
+      "headline": "SURGE: BIS sends extra export-control agents to China",
+      "body": "Washington wants to know where the chips are going. Checks are up {pct}% in every Chinese city.",
+      "end": "The BIS surge in China winds down."
+    },
+    "transshipment_probe": {
+      "headline": "PROBE: US, Singapore and Malaysia hunt chip transshipment",
+      "body": "A joint task force is checking where every GPU goes next. Checks are up {pct}% in Singapore and Malaysia.",
+      "end": "The transshipment task force disbands."
+    },
+    "officers_expelled": {
+      "headline": "EXPELLED: {port} sends US export-control officers home",
+      "body": "No BIS checks in {port} until they're allowed back.",
+      "end": "BIS officers are back in {port}."
+    },
+    "anti_corruption": {
+      "headline": "PURGE: Anti-corruption drive sweeps {port}",
+      "body": "Dozens of local officials have been arrested. Your fixers in {port} are lying low.",
+      "end": "The {port} purge winds down. Your fixers pick up the phone again."
+    },
+    "ai_frenzy": {
+      "headline": "AI FRENZY: New model release sends labs scrambling for compute",
+      "body": "Whitewell prices are up {pct}% everywhere.",
+      "end": "The AI frenzy cools. Whitewell prices settle."
+    },
+    "successor_unveiled": {
+      "headline": "KEYNOTE: {company} unveils Whitewell's successor",
+      "body": "Nobody wants last-generation chips now. Z200 prices are down {pct}% everywhere.",
+      "end": "Z200 demand recovers as the new chip slips."
+    },
+    "buy_domestic": {
+      "headline": "BUY DOMESTIC: Beijing tells firms to avoid the Z20",
+      "body": "Chinese buyers are told to choose local chips. Z20 prices in China are down {pct}%.",
+      "end": "Chinese buyers quietly return to the Z20."
+    },
+    "datacenter_boom": {
+      "headline": "BOOM: Hyperscalers pour billions into Johor",
+      "body": "Every chip sells for {pct}% more in {port}.",
+      "end": "The Johor data-centre rush levels off."
+    },
+    "crypto_crash": {
+      "headline": "CRYPTO CRASH: Miners dump gaming GPUs",
+      "body": "Used cards flood the market. Riptide 4090 prices are down {pct}% everywhere.",
+      "end": "The used-card glut clears."
+    },
+    "tariffs": {
+      "headline": "TARIFFS: {port} slaps a {pct}% levy on imported {good}",
+      "body": "Buyers in {port} are paying less to cover it.",
+      "end": "{port} drops its tariff on {good}."
+    },
+    "earthquake": {
+      "headline": "EARTHQUAKE: {home} fabs halted for safety checks",
+      "body": "Production of every chip is down {pct}% for {months} months.",
+      "end": "The fabs are back at full speed."
+    },
+    "yield_breakthrough": {
+      "headline": "BREAKTHROUGH: Whitewell yields jump",
+      "body": "The fabs will make {pct}% more Whitewell for {months} months.",
+      "end": "Whitewell output returns to normal."
+    },
+    "packaging_shortage": {
+      "headline": "BOTTLENECK: Advanced packaging shortage hits Whitewell",
+      "body": "Whitewell output is down {pct}% for {months} months.",
+      "end": "The packaging shortage eases."
+    },
+    "lockdown": {
+      "headline": "LOCKDOWN: {port} seals its borders after an outbreak",
+      "body": "No shipments in or out of {port} until further notice.",
+      "end": "{port} reopens."
+    },
+    "guidance_raise": {
+      "headline": "GUIDANCE RAISED: {company} promises Wall Street even more",
+      "body": "The CFO needs it from somewhere. Your target this quarter goes up {pct}% to {amount}."
+    },
+    "guidance_cut": { "headline": "GUIDANCE CUT: {company} lowers expectations", "body": "Analysts groan. Your target this quarter drops {pct}% to {amount}." },
+    "subsidy": { "headline": "SUBSIDY: Government grant credited to your division", "body": "A {amount} incentive payment counts toward this quarter's revenue." },
+    "leak": { "headline": "LEAKED: Emails suggest {company} chips are reaching China", "body": "BIS agents everywhere now know your name. Scrutiny +{points}." },
+    "freight_spike": { "headline": "FREIGHT SQUEEZE: Air cargo rates soar", "body": "Freight costs are up {pct}% for {months} months.", "end": "Air cargo rates come back down." }
+  },
+
+  "highScores": {
+    "title": "High Scores",
+    "empty": "No finished games yet.",
+    "columns": {
+      "name": "Name",
+      "bonus": "Total bonus",
+      "rating": "Final title",
+      "until": "Lasted until",
+      "date": "Played"
+    }
+  },
+
+  "gameOver": {
+    "title": "EXIT INTERVIEW",
+    "bonus": "Total bonus: {bonus}",
+    "rating": "Final title: {rating}",
+    "stats": "Trips: {trips} · Total sales: {sales} · BIS checks: {inspections} · Times chips were confiscated: {seizures} · Fixers' fees: {bribes} · Penalties: {fines}",
+    "when": "It ended in {month} {year}. Full quarters completed: {n}."
+  },
+
+  "endings": {
+    "fired": "{strikes} missed quarters in a row. A meeting called \"Quick sync\" turns out to be HR and someone from Legal. Security walks you to the lobby.",
+    "resigned": "You resign and join a startup. Your {company} stock keeps vesting. Mostly.",
+    "ceoOusted": "The doom meter hits {doomMax}. Under pressure from the Washington natsec blob, {company}'s CEO resigns \"to spend more time with family\". The new CEO's first memo shuts down Asia-Pacific operations. Your badge stops working at noon."
+  },
+
+  "ratings": {
+    "costcenter": { "title": "Cost Center", "text": "Your badge stops working the day you leave." },
+    "teamplayer": { "title": "Team Player", "text": "Solid. Your manager writes you a nice LinkedIn recommendation." },
+    "director": { "title": "Director", "text": "You hit your numbers and kept your name out of the papers." },
+    "vp": { "title": "Vice President", "text": "The CEO knows your name, and so does at least one customs agency." },
+    "evp": { "title": "Executive VP", "text": "Board members ask for you by name. So do congressional investigators." },
+    "heir": { "title": "Heir Apparent", "text": "There's talk of you running the company one day. There's also a subpoena." }
+  },
+
+  "errors": {
+    "gameOver": "The game is over.",
+    "busy": "Deal with the current event first.",
+    "homeOnly": "You can only do that in {home}.",
+    "invalidAmount": "Enter a whole number greater than zero.",
+    "notEnoughSpace": "Not enough cargo space. Free: {free} units.",
+    "notEnoughGoods": "You don't have that many {good}.",
+    "warehouseFull": "The warehouse only has room for {free} more units.",
+    "invalidPort": "No such city.",
+    "alreadyHere": "You're already there.",
+    "portClosed": "{port} is closed.",
+    "noStep": "Nothing to respond to.",
+    "invalidChoice": "You can't do that."
+  },
+
+  "exportControls": {
+    "announced": "NEW EXPORT RULE COMING IN {quarter}: {rule}",
+    "announcedBody": "Commerce publishes the rule today. It takes effect in {quarter}, so plan your shipments.",
+    "inForce": "NEW EXPORT RULE NOW IN FORCE: {rule}",
+    "upcoming": "Coming soon:",
+    "upcomingItem": "{quarter}: {rule}",
+    "rules": {
+      "z20_license_china": { "rule": "Z20 needs a US export license in China", "body": "Commerce decides the cut-down chip isn't cut down enough." },
+      "whitewell_license_malaysia": { "rule": "Whitewell needs a license in Malaysia", "body": "Under pressure from Washington, Malaysia makes Whitewell a licensed export." },
+      "whitewell_license_singapore": { "rule": "Whitewell needs a license in Singapore", "body": "After the smuggling scandals, Singapore wants paperwork for every Whitewell that lands." },
+      "z200_ban_china": { "rule": "Z200 banned in China", "body": "Older chips are being used to train frontier models, says Washington." },
+      "z200_license_sea": { "rule": "Z200 needs a license in Singapore and Malaysia", "body": "Washington closes the transshipment route for last-generation chips." },
+      "z20_ban_china": { "rule": "Z20 banned in China", "body": "The cut-down chip built to meet the rules is now banned outright." },
+      "riptide_license_china": { "rule": "Riptide 4090 needs a license in China", "body": "Gaming cards are being rewired for AI. Commerce adds them to the list." },
+      "whitewell_ban_malaysia": { "rule": "Whitewell banned in Malaysia", "body": "Malaysia gives up on permits and bans Whitewell outright." }
+    }
+  }
+}

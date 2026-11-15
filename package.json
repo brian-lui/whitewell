@@ -1,0 +1,11 @@
+{
+  "name": "whitewell",
+  "private": true,
+  "type": "module",
+  "description": "A text game about shipping GPUs past export controls.",
+  "scripts": {
+    "test": "node --test",
+    "simulate": "node tools/simulate.js",
+    "serve": "python -m http.server 8000"
+  }
+}
