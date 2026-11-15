@@ -101,3 +101,46 @@ test('the smuggling bots do not sell banned chips while the climate is too hot f
     assertKeptBannedCargo(g, name);
   }
 });
+
+// ---------- bots that only take risks to make the quota ----------
+
+import { panics } from '../tools/simulate.js';
+
+function homeGame() {
+  const g = newGame();
+  drain(g);
+  return g;
+}
+
+test('the clutch bot only panics when playing safe will miss the target', () => {
+  const ahead = homeGame();
+  ahead.state.quarter.sales = ahead.state.target;
+  assert.equal(panics(ahead, BOTS.clutch), false, 'panicked with the target already made');
+
+  const behind = homeGame();
+  behind.state.quarter.costs = 10 * behind.state.target;
+  assert.equal(panics(behind, BOTS.clutch), true, 'did not panic with no way to make the target');
+});
+
+test('the lastResort bot only panics when one more miss would get it fired', () => {
+  const g = homeGame();
+  g.state.quarter.costs = 10 * g.state.target;
+  g.state.misses = 0;
+  assert.equal(panics(g, BOTS.lastResort), false, 'panicked with a miss to spare');
+  g.state.misses = g.config.targets.missesToFire - 1;
+  assert.equal(panics(g, BOTS.lastResort), true, 'did not panic on notice');
+});
+
+test('a panicking clutch bot takes banned Whitewell to China, in any climate', () => {
+  const g = homeGame();
+  g.state.doom = g.config.doom.levels.at(-1).from + 1; // the hottest climate
+  const dest = homeTurn(g, { ...BOTS.clutch, ...BOTS.clutch.panic });
+  assert.ok(CHINA.includes(dest), `went to ${dest}`);
+  assert.ok(g.state.hold.whitewell > 0, 'left the Whitewell behind');
+});
+
+test('a clutch bot that is not panicking plays like the cautious bot', () => {
+  const g = homeGame();
+  const dest = homeTurn(g, BOTS.clutch);
+  assertCargoFits(g, 'clutch', dest);
+});

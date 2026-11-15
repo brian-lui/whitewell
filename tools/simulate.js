@@ -46,7 +46,38 @@ export const BOTS = {
   smuggler: { restricted: true, smuggleUpTo: 2, riskWeight: 1, bribeAbove: 0.45 },
   // Always smuggles, ignores the risk, always bribes.
   reckless: { restricted: true, smuggleUpTo: 99, riskWeight: 0, bribeAbove: 0 },
+  // Plays like cautious, but when playing safe won't make the quarter's target,
+  // smuggles in any climate (the `panic` settings replace the normal ones for that trip).
+  clutch: { restricted: true, smuggleUpTo: -1, riskWeight: 1, bribeAbove: 2, panic: { when: 'behind', smuggleUpTo: 99, bribeAbove: 0.45 } },
+  // The same, but only when one more missed quarter would get it fired.
+  lastResort: { restricted: true, smuggleUpTo: -1, riskWeight: 1, bribeAbove: 2, panic: { when: 'onNotice', smuggleUpTo: 99, bribeAbove: 0.45 } },
 };
+
+// For a bot with `panic` settings, at home before a trip: whether playing safe falls
+// short of the target for the quarter this trip's sales count toward (and, for
+// "onNotice", whether missing it would get the bot fired).
+export function panics(g, bot) {
+  if (!bot.panic) return false;
+  const s = g.state;
+  const T = g.config.targets;
+  const safe = Math.max(0, planTrip(g, bot).value); // one safe trip's expected net
+  let net = g.net();
+  let target = s.target;
+  let misses = s.misses;
+  let trips = g.monthsLeftInQuarter() - 1; // trips still landing this quarter, this one included
+  if (trips === 0) {
+    // This trip lands next quarter. This one closes on departure, after the bot
+    // has sold what it can at home to close the gap.
+    const stock = g.goodIds.reduce((sum, id) => sum + (s.warehouse[id] + s.hold[id]) * g.price(id), 0);
+    if (net - g.freightCost() + stock < target) misses++;
+    else misses = 0;
+    net = 0;
+    target = (target / (s.targetScale || 1)) * (1 + T.growth);
+    trips = g.monthsPerQuarter;
+  }
+  const behind = net + trips * safe < target;
+  return bot.panic.when === 'onNotice' ? behind && misses >= T.missesToFire - 1 : behind;
+}
 
 // Whether the bot's strategy lets it sell this chip in that city: under the rules
 // in force by the time it lands (or in the given month), and today's climate,
@@ -151,21 +182,29 @@ export function abroadTurn(g, bot) {
 export function playGame(config, seed, botName, startId) {
   const bot = BOTS[botName];
   const g = createGame(config, { name: botName, startId, seed });
+  // A panicking bot decides at home and sticks with it until it's home again.
+  let play = bot;
+  let panicTrips = 0;
   let guard = 0;
   while (!g.state.gameOver && guard++ < 3000) {
     const step = g.currentStep();
     if (step) {
       const choices = g.stepChoices(step).filter((c) => c.enabled).map((c) => c.id);
       let choice = choices[0];
-      if (choices.includes('bribe') && step.data.bribeChance >= bot.bribeAbove) choice = 'bribe';
+      if (choices.includes('bribe') && step.data.bribeChance >= play.bribeAbove) choice = 'bribe';
       if (choices.includes('accept')) choice = step.data.price < 0.12 * g.state.target ? 'accept' : 'decline';
       g.resolveStep(choice);
       continue;
     }
-    g.travel(g.atHome ? homeTurn(g, bot) : abroadTurn(g, bot));
+    if (g.atHome) {
+      play = panics(g, bot) ? { ...bot, ...bot.panic } : bot;
+      if (play !== bot) panicTrips++;
+    }
+    g.travel(g.atHome ? homeTurn(g, play) : abroadTurn(g, play));
   }
   const s = g.state;
   return {
+    panicTrips,
     bonus: s.bonus,
     reason: s.gameOver?.reason,
     profile: s.profile,
@@ -215,6 +254,7 @@ function main() {
     if (fired.length) console.log(`  fired        median ${date(pct(months(fired), 0.5))}`);
     console.log(`  game over    median ${date(pct(ends, 0.5))} (any reason)`);
     console.log(`  per game     targets met ${avg(results, (r) => r.met)}/${avg(results, (r) => r.quarters)}   banned chips sold ${avg(results, (r) => r.stats.smuggled)}   inspections ${avg(results, (r) => r.stats.inspections)}   seizures ${avg(results, (r) => r.stats.seizures)}   final profile ${avg(results, (r) => r.profile)}`);
+    if (BOTS[name].panic) console.log(`  panic trips  ${avg(results, (r) => r.panicTrips)} of ${avg(results, (r) => r.stats.trips)} per game`);
     console.log(`  ratings      ${config.ratings.map((r) => `${r.id} ${((100 * (ratings[r.id] || 0)) / GAMES).toFixed(0)}%`).join('  ')}\n`);
   }
 }
