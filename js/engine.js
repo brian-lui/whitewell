@@ -176,23 +176,31 @@ export class Game {
   // The city's own rules (config.json → ports[].legality). Prices are set against these.
   portLegality(port, good) { return this.portsById[port]?.legality?.[good] || 'legal'; }
   // The city's rules plus every export-control round in force. Rounds only make things
-  // stricter unless they say "mode": "set".
-  baseLegality(port, good) {
+  // stricter unless they say "mode": "set". Pass a later month to see the rules then.
+  baseLegality(port, good, month = this.state.month) {
     let legality = this.portLegality(port, good);
     for (const r of this.rules) {
-      if (r.month > this.state.month || !this._covers(r.port, port) || !this._covers(r.good, good)) continue;
+      if (r.month > month || !this._covers(r.port, port) || !this._covers(r.good, good)) continue;
       if (r.mode === 'set' || rank(r.legality) > rank(legality)) legality = r.legality;
     }
     return legality;
   }
-  legality(port, good) {
-    let legality = this.baseLegality(port, good);
+  // The rules plus any events changing them. For a later month, this is what's known
+  // now: rounds in force by then, and only the events that won't have run out.
+  // (An effect expires at the next new month when it has 1 month left.)
+  legality(port, good, month = this.state.month) {
+    let legality = this.baseLegality(port, good, month);
+    const ahead = month - this.state.month;
     for (const e of this.effectsFor('legality', port, good)) {
+      if (ahead > 0 && e.monthsLeft <= ahead) continue;
       if (e.mode === 'max') { if (rank(e.value) > rank(legality)) legality = e.value; }
       else legality = e.value;
     }
     return legality;
   }
+  // The month you'd land in that city if you set off now: a trip out takes a month,
+  // flying home is instant.
+  arrivalMonth(port) { return port === this.home ? this.state.month : this.state.month + 1; }
 
   inspectionChance(port) {
     const base = this.portsById[port].inspection + this.state.heat * this.config.heat.inspectionPerPoint;
@@ -382,6 +390,7 @@ export class Game {
     if (s.gameOver) return ok(); // fired at the quarterly review
     this._rollDoom();
     this._rollPolitics();
+    this.produce(); // after the news, so a production event covers the month it's announced
     if (s.pendingEnd) return ok(); // the doom meter maxed out on the way: the trip never lands
 
     let to = dest;
@@ -439,7 +448,6 @@ export class Game {
       else this._news(`events.${e.eventId}.end`, null, e.vars);
     }
     s.effects = remaining;
-    this.produce();
   }
 
   // How much harder the hawks push because of your profile: 1 at profile 0,

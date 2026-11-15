@@ -24,6 +24,7 @@
     "nothing": "nothing",
     "quarterFormat": "Q{n} {year}",
     "restartConfirm": "Abandon this game and start over?",
+    "saveFailed": "Your progress isn't being saved: this browser won't let the game store data. If you reload or close the page, you'll lose it.",
     "status": {
       "who": "{name} · {company}",
       "date": "{month} {year}",
@@ -181,7 +182,13 @@
     "cost": "A trip out costs {cost} in freight, charged to this quarter, and takes a month. Flying back to {home} is quick and free.",
     "option": "{port} (BIS checks: {level})",
     "home": "{port}: return home, no time or cost",
-    "risk": { "restricted": "! some cargo needs a license here", "contraband": "! you're carrying BANNED chips" }
+    "risk": { "restricted": "! some cargo needs a license here", "contraband": "! you're carrying BANNED chips" },
+    "riskOnArrival": {
+      "legal": "(all your cargo will be legal by the time you land)",
+      "restricted": "! some cargo will need a license by the time you land",
+      "contraband": "! some cargo will be BANNED by the time you land"
+    },
+    "riskNote": "Cargo warnings are for when you land: they count announced export rules and temporary changes that run out on the way. New events on the way can still change things."
   },
 
   "performance": {

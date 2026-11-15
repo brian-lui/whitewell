@@ -24,7 +24,7 @@ function el(tag, props = {}, ...children) {
 
 const storage = {
   get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
-  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* disabled or full */ } },
+  set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; /* disabled or full */ } },
   remove(key) { try { localStorage.removeItem(key); } catch { /* ignore */ } },
 };
 
@@ -37,6 +37,7 @@ export class App {
     this.game = null;
     this.view = { name: 'title' };
     this.flash = null;
+    this.saveFailed = false;
     this.warned = new Set();
     this.hotkeys = new Map();
     root.replaceChildren(
@@ -120,7 +121,12 @@ export class App {
   }
 
   // ---------- state helpers ----------
-  save() { if (this.game) storage.set(SAVE_KEY, this.game.state); }
+  // Returns whether the game was saved. A failure keeps a warning on screen until a save works.
+  save() {
+    if (!this.game) return false;
+    this.saveFailed = !storage.set(SAVE_KEY, this.game.state);
+    return !this.saveFailed;
+  }
   savedState() {
     const s = storage.get(SAVE_KEY);
     return s && s.version === SAVE_VERSION ? s : null;
@@ -167,7 +173,8 @@ export class App {
     const inGame = !!this.game && !SETUP_VIEWS.has(this.view.name);
     this.statusEl.hidden = !inGame;
     this.statusEl.replaceChildren(...(inGame ? this.renderStatus() : []));
-    const body = [v.body, v.input ? this.renderInput(v.input) : null,
+    const body = [inGame && this.saveFailed ? el('p', { class: 'flash error' }, this.t('ui.saveFailed')) : null,
+      v.body, v.input ? this.renderInput(v.input) : null,
       this.flash ? el('p', { class: `flash ${this.flash.kind}` }, this.flash.text) : null];
     this.screenEl.replaceChildren(...body.flat(Infinity).filter(Boolean));
     this.renderActions(v.actions || []);
@@ -517,12 +524,13 @@ export class App {
     };
   }
 
-  // The worst legal status of anything in your cargo at that city.
-  cargoRisk(port) {
+  // The worst legal status of anything in your cargo at that city, by the time you'd
+  // land there (or in the given month).
+  cargoRisk(port, month = this.game.arrivalMonth(port)) {
     const g = this.game;
     let worst = 0;
     for (const id of g.goodIds) {
-      if (g.state.hold[id] > 0) worst = Math.max(worst, LEGALITY_ORDER.indexOf(g.legality(port, id)));
+      if (g.state.hold[id] > 0) worst = Math.max(worst, LEGALITY_ORDER.indexOf(g.legality(port, id, month)));
     }
     return worst > 0 ? LEGALITY_ORDER[worst] : null;
   }
@@ -533,13 +541,16 @@ export class App {
     const label = (p) => {
       if (p === g.home) return this.t('travel.home', { port: p });
       const risk = this.cargoRisk(p);
+      const changed = risk !== this.cargoRisk(p, s.month); // known to change while you're on the way
       const base = this.t('travel.option', { port: p, level: this.t(`customsLevels.${g.customsLevel(p)}`) });
+      if (changed) return `${base} ${this.t(`travel.riskOnArrival.${risk || 'legal'}`)}`;
       return risk ? `${base} ${this.t(`travel.risk.${risk}`)}` : base;
     };
     // Home first when you're away: it's the usual next move.
     const order = g.portIds.filter((p) => p !== s.port).sort((a, b) => (b === g.home) - (a === g.home));
     return {
-      body: [el('h2', {}, this.t('travel.title')), this.p(this.t('travel.cost', { cost: g.freightCost() }))],
+      body: [el('h2', {}, this.t('travel.title')), this.p(this.t('travel.cost', { cost: g.freightCost() })),
+        g.holdUsed() > 0 && this.p(this.t('travel.riskNote'), 'dim small')],
       actions: [
         ...order.map((p) => ({
           option: true,

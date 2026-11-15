@@ -447,6 +447,34 @@ test('production events change what the fabs make', () => {
   assert.equal(g.productionFactor('riptide'), 1);
 });
 
+// The fabs make exactly 10 Whitewell a month (and nothing else). An earthquake that
+// halves output for `eventMonths` strikes on the first trip, through the normal
+// monthly news roll. Returns how much Whitewell landed in the warehouse each month.
+function outputDuringEarthquake(eventMonths, months) {
+  const g = newGame(quietConfig((c) => {
+    for (const good of c.goods) { good.production = 0; good.productionTrend = 0; }
+    c.goods.find((good) => good.id === 'whitewell').production = [10, 10];
+    c.politics.secondEventChance = 0;
+    c.politics.events = [{ id: 'earthquake', kind: 'production', good: 'all', value: [0.5, 0.5], months: [eventMonths, eventMonths] }];
+  }));
+  const outputs = [];
+  for (let i = 0; i < months; i++) {
+    g.config.politics.eventChance = i === 0 ? 1 : 0;
+    const before = g.state.warehouse.whitewell;
+    advanceMonths(g, 1);
+    outputs.push(g.state.warehouse.whitewell - before);
+  }
+  return outputs;
+}
+
+test('a one-month production event affects that month\'s output, then output returns to normal', () => {
+  assert.deepEqual(outputDuringEarthquake(1, 3), [5, 10, 10]);
+});
+
+test('a production event lasting N months affects N months of output', () => {
+  assert.deepEqual(outputDuringEarthquake(3, 5), [5, 5, 5, 10, 10]);
+});
+
 test('target and revenue events change this quarter\'s numbers', () => {
   const g = newGame(quietConfig((c) => {
     c.politics.events = [
