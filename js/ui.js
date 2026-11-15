@@ -48,6 +48,9 @@ export class App {
     );
     document.title = this.t('game.title');
     document.addEventListener('keydown', (e) => this.onKey(e));
+    // A finished game whose score didn't make it onto the high-score list: try again.
+    const saved = this.savedState();
+    if (saved?.gameOver) this.recordScore(saved);
     this.render();
   }
 
@@ -175,6 +178,7 @@ export class App {
 
   // ---------- rendering ----------
   render() {
+    const spot = this.focusSpot(); // before the focused node is replaced
     this.inputEl = null;
     const v = this.buildView();
     const inGame = !!this.game && !SETUP_VIEWS.has(this.view.name);
@@ -182,13 +186,69 @@ export class App {
     this.statusEl.replaceChildren(...(inGame ? this.renderStatus() : []));
     const body = [inGame && this.saveFailed ? el('p', { class: 'flash error' }, this.t('ui.saveFailed')) : null,
       v.body, v.input ? this.renderInput(v.input) : null,
-      this.flash ? el('p', { class: `flash ${this.flash.kind}` }, this.flash.text) : null];
-    this.screenEl.replaceChildren(...body.flat(Infinity).filter(Boolean));
+      this.flash ? el('p', { class: `flash ${this.flash.kind}` }, this.flash.text) : null].flat(Infinity).filter(Boolean);
+    // A view's heading is always at the top level of its body. It (or the screen, if there's
+    // no heading) can take focus from a script, but isn't a Tab stop.
+    this.headingEl = body.find((n) => n.tagName === 'H1' || n.tagName === 'H2') ?? null;
+    if (this.headingEl) this.screenEl.removeAttribute('tabindex');
+    (this.headingEl || this.screenEl).setAttribute('tabindex', '-1');
+    this.screenEl.replaceChildren(...body);
     this.renderActions(v.actions || []);
     const showRestart = inGame && !this.game.state.gameOver;
     this.footerEl.replaceChildren(...(showRestart
       ? [el('button', { type: 'button', class: 'link', onclick: () => this.restart() }, this.button('restart'))] : []));
-    if (this.inputEl) { this.inputEl.focus(); this.inputEl.select(); }
+    this.placeFocus(spot);
+  }
+
+  // Which screen is on show: an event screen is its step, any other screen its view.
+  screenKey() {
+    const g = this.game;
+    if (g && !SETUP_VIEWS.has(this.view.name)) {
+      if (g.state.gameOver) return 'gameOver';
+      const step = g.currentStep();
+      if (step) return `step ${step.id}`;
+    }
+    return JSON.stringify(this.view);
+  }
+
+  // Where focus is, in a form that outlives a redraw: on the heading (or the screen), or on an
+  // action button, by its list and place in it. Null if it's anywhere else.
+  focusSpot() {
+    const a = document.activeElement;
+    if (a && (a === this.headingEl || a === this.screenEl)) return { heading: true };
+    for (const [list, buttons] of (this.buttonLists ?? []).entries()) {
+      const at = buttons.indexOf(a);
+      if (at >= 0) return { list, at };
+    }
+    return null;
+  }
+
+  // Focus after a redraw, which takes the focused node off the page:
+  //  - the same screen: the same control;
+  //  - back on the screen you just came from: the button you left it with;
+  //  - a new screen: its input if it has one, or else its heading (or the screen itself).
+  // A button only gets focus back if it had it, so Enter and the shortcut keys keep working.
+  placeFocus(spot) {
+    const from = this.screen;
+    this.screen = this.screenKey();
+    let to = spot;
+    if (this.screen !== from) {
+      to = this.left?.screen === this.screen ? this.left.spot : null;
+      this.left = { screen: from, spot }; // one level of memory is enough
+    }
+    if (this.inputEl) { this.inputEl.focus(); this.inputEl.select(); return; }
+    if (to?.list !== undefined && this.focusButton(to)) return;
+    if (to || this.screen !== from) (this.headingEl || this.screenEl).focus(); // else it wasn't on this screen: leave it
+  }
+
+  // Focus the button at a spot or, if it can't be used now, the nearest one in its list that can.
+  focusButton({ list, at }) {
+    const buttons = this.buttonLists[list] ?? [];
+    for (let d = 0; d <= Math.max(at, buttons.length); d++) {
+      const b = [buttons[at + d], buttons[at - d]].find((x) => x && !x.disabled);
+      if (b) { b.focus(); return true; }
+    }
+    return false;
   }
 
   buildView() {
@@ -276,6 +336,7 @@ export class App {
       if (a.primary) this.enterAction = a;
     }
     this.actionsEl.replaceChildren(...[list, row].filter((n) => n.childNodes.length));
+    this.buttonLists = [[...list.childNodes], [...row.childNodes]]; // for putting focus back
   }
   labelNodes(label, key, numbered) {
     if (!key) return [label];
@@ -825,20 +886,38 @@ export class App {
   }
 
   // ---------- end ----------
+  // Puts a finished game's score on the high-score list once, and returns whether it's there.
+  // The entry, with an id, is saved with the game before the list is written, so if the game
+  // then can't save that the score was recorded, the next try finds it on the list by its id.
+  recordScore(s) {
+    if (s.scoreRecorded) return true;
+    const over = s.gameOver;
+    const entry = (s.scoreEntry ||= { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      name: s.name, bonus: over.bonus, rating: this.rating(over.bonus).id, month: over.month, date: new Date().toISOString() });
+    const save = () => (this.game ? this.save() : storage.set(SAVE_KEY, s)); // on opening, the game is only in storage
+    if (!save()) {
+      // A saved copy of this finished game without the id would be recorded again on reload, so wait.
+      const kept = storage.get(SAVE_KEY);
+      if (kept?.gameOver && kept.scoreEntry?.id !== entry.id) return false;
+    }
+    const scores = storage.get(SCORES_KEY) || [];
+    if (!scores.some((sc) => sc.id === entry.id)) {
+      scores.push(entry);
+      scores.sort((a, b) => b.bonus - a.bonus);
+      if (!storage.set(SCORES_KEY, scores.slice(0, 10))) return false;
+    }
+    s.scoreRecorded = true;
+    save();
+    return true;
+  }
+
   view_gameOver() { return this.viewGameOver(); }
   viewGameOver() {
     const g = this.game;
     const s = g.state;
     const over = s.gameOver;
     const rating = this.rating(over.bonus);
-    if (!s.scoreRecorded) {
-      s.scoreRecorded = true;
-      const scores = storage.get(SCORES_KEY) || [];
-      scores.push({ name: s.name, bonus: over.bonus, rating: rating.id, month: over.month, date: new Date().toISOString() });
-      scores.sort((a, b) => b.bonus - a.bonus);
-      storage.set(SCORES_KEY, scores.slice(0, 10));
-      this.save();
-    }
+    const recorded = this.recordScore(s);
     const st = s.stats;
     return {
       body: [
@@ -851,11 +930,13 @@ export class App {
         s.quarters.length > 0 && this.quarterTable(s.quarters),
         this.p(this.t('gameOver.stats', { trips: st.trips, sales: st.sales, inspections: st.inspections, seizures: st.seizures,
           bribes: st.bribesPaid, fines: st.finesPaid }), 'small'),
+        !recorded && this.p(this.t('gameOver.scoreNotSaved'), 'flash error'),
       ],
       actions: [
-        { label: this.button('newGame'), primary: true, run: () => { this.game = null; this.go('setupName'); } },
+        !recorded && { label: this.button('retry'), primary: true, run: () => this.render() }, // rendering tries again
+        { label: this.button('newGame'), primary: recorded, run: () => { this.game = null; this.go('setupName'); } },
         { label: this.button('highScores'), run: () => this.go('highScores') },
-      ],
+      ].filter(Boolean),
     };
   }
 }

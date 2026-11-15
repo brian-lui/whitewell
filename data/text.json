@@ -59,7 +59,8 @@
       "resign": "Resign",
       "yes": "Yes",
       "no": "No",
-      "restart": "Restart"
+      "restart": "Restart",
+      "retry": "Try again"
     },
     "table": {
       "good": "Chip",
@@ -417,7 +418,8 @@
     "bonus": "Total bonus: {bonus}",
     "rating": "Final title: {rating}",
     "stats": "Trips: {trips} · Total sales: {sales} · BIS checks: {inspections} · Times chips were confiscated: {seizures} · Fixers' fees: {bribes} · Penalties: {fines}",
-    "when": "It ended in {month} {year}. Full quarters completed: {n}."
+    "when": "It ended in {month} {year}. Full quarters completed: {n}.",
+    "scoreNotSaved": "Your score isn't on the high-score list yet: this browser wouldn't let the game store it there. You can try again."
   },
 
   "endings": {
