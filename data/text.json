@@ -6,7 +6,7 @@
     "subtitle": "Chips, quotas and export controls",
     "company": "NVIDEO",
     "intro": [
-      "It is {month} {year}. {company} is worth more than most countries, and every AI lab on Earth wants its new Whitewell GPUs.",
+      "It is March 2024. {company} is worth more than most countries, and every AI lab on Earth wants its new Whitewell GPUs.",
       "You are {name}, senior operations manager for {company} Asia-Pacific. Every month the fabs in {home} hand you a batch of chips. Your job is to get them to customers.",
       "Each quarter you have a revenue target. Hit it and you earn a bonus. Miss {strikes} in a row and you're fired.",
       "Washington gets angrier every month. When the doom meter reaches {doomMax}, the national-security establishment forces {company}'s CEO to resign, the new boss shuts down your division, and the game is over. Smuggling gets you noticed and brings that day closer. Earn as much bonus as you can before it comes."
