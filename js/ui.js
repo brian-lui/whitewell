@@ -105,6 +105,13 @@ export class App {
     if (a >= 1e4) return `${sign}${cur}${Math.round(a / 1e3)}${this.raw('ui.thousands')}`;
     return this.money(n);
   }
+  // Like moneyShort, but in thousands below $10,000 too ($8.3k, $0.5k), so a table of prices lines up.
+  moneyK(n) {
+    const a = Math.abs(n);
+    if (a < 100) return this.moneyShort(n);
+    if (a >= 9_950) return this.moneyShort(a < 1e4 ? Math.sign(n) * 1e4 : n); // $9,960 is $10k, not $10.0k
+    return `${n < 0 ? '-' : ''}${this.raw('ui.currency')}${(a / 1e3).toFixed(1)}${this.raw('ui.thousands')}`;
+  }
   portName(id) { return this.raw(`ports.${id}.name`); }
   goodName(id) { return this.raw(`goods.${id}.name`); }
   button(key) { return this.t(`ui.buttons.${key}`); }
@@ -563,10 +570,10 @@ export class App {
           const leg = g.legality(port, id, month);
           const mark = leg !== g.legality(port, id) ? '*' : ''; // changes while you're on the way
           return el('td', { class: `num ${leg}${prices[id] === best[id] ? ' best' : ''}` },
-            `${this.moneyShort(prices[id])} ${this.t(`regulations.short.${leg}`)}${mark}`);
+            `${this.moneyK(prices[id])}${mark}`); // the colour gives the status
         }),
         carrying && (closed ? blank()
-          : el('td', { class: 'num' }, this.moneyShort(goods.reduce((sum, id) => sum + s.hold[id] * prices[id], 0)))));
+          : el('td', { class: 'num' }, this.moneyK(goods.reduce((sum, id) => sum + s.hold[id] * prices[id], 0)))));
     });
     return [
       this.p(this.t('compare.title'), 'kicker'),

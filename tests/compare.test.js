@@ -99,12 +99,12 @@ test('the travel screen compares every foreign city for the chips you carry', ()
     for (const id of ['whitewell', 'z200']) {
       const cell = row[short(id)];
       const leg = g.legality(p, id, month);
-      assert.ok(cell.text.includes(app.moneyShort(g.indicativePrice(p, id))), `${p} ${id}: price`);
-      assert.ok(cell.text.includes(app.t(`regulations.short.${leg}`)), `${p} ${id}: status`);
+      const mark = leg !== g.legality(p, id) ? '*' : '';
+      assert.equal(cell.text, app.moneyK(g.indicativePrice(p, id)) + mark, `${p} ${id}: just the price, no status text`);
       assert.ok(cell.className.split(' ').includes(leg), `${p} ${id}: coloured by status`);
     }
     const value = 5 * g.indicativePrice(p, 'whitewell') + 10 * g.indicativePrice(p, 'z200');
-    assert.equal(row[app.t('ui.table.cargoValue')].text, app.moneyShort(value), `${p}: cargo value`);
+    assert.equal(row[app.t('ui.table.cargoValue')].text, app.moneyK(value), `${p}: cargo value`);
   }
 });
 
@@ -125,9 +125,11 @@ test('the comparison shows status on arrival and marks what changes on the way',
   const g = loadedAtHome(steady((c) => { c.exportControls.rules = [Z200_BAN_NEXT_MONTH]; }), { z200: 10 });
   const { app, rows } = comparison(g, 'travel');
   const shenzhen = rows[app.portName('shenzhen')][text.goods.z200.short];
-  assert.ok(shenzhen.text.includes(`${app.t('regulations.short.contraband')}*`), shenzhen.text);
+  assert.equal(shenzhen.text, `${app.moneyK(g.indicativePrice('shenzhen', 'z200'))}*`);
+  assert.ok(shenzhen.className.split(' ').includes('contraband'), shenzhen.className);
   const singapore = rows[app.portName('singapore')][text.goods.z200.short];
   assert.ok(!singapore.text.includes('*'), singapore.text);
+  assert.ok(singapore.className.split(' ').includes('legal'), singapore.className);
 });
 
 test('a city still closed when you would land shows as closed; one reopening on the way does not', () => {
@@ -143,7 +145,7 @@ test('a city still closed when you would land shows as closed; one reopening on 
   assert.equal(rows[app.portName('singapore')][app.t('ui.table.customs')].text, closed);
   assert.ok(!rows[app.portName('singapore')][text.goods.z200.short].text.includes('$'), 'no price for a closed city');
   assert.notEqual(rows[app.portName('johor')][app.t('ui.table.customs')].text, closed);
-  assert.ok(rows[app.portName('johor')][text.goods.z200.short].text.includes(app.moneyShort(g.indicativePrice('johor', 'z200'))));
+  assert.ok(rows[app.portName('johor')][text.goods.z200.short].text.includes(app.moneyK(g.indicativePrice('johor', 'z200'))));
 });
 
 test('the load screen compares cities for the chips in your warehouse too', () => {
@@ -169,4 +171,23 @@ test('abroad, the comparison leaves out where you are, and is not shown with an 
   assert.ok(!cities.includes(app.portName('singapore')));
   assert.ok(!cities.includes(app.portName(g.home)));
   assert.equal(cities.length, g.portIds.length - 2);
+});
+
+test('comparison prices are in thousands: $xxk and $xxxk, and $x.xk below $10,000', () => {
+  const app = new App(new FakeNode('div'), quietConfig(), text);
+  const cases = [[48_123, '$48k'], [134_400, '$134k'], [10_000, '$10k'], [8_336, '$8.3k'], [1_843, '$1.8k'],
+    [1_000, '$1.0k'], [500, '$0.5k'], [9_960, '$10k'], [1_060_000, '$1.06M']];
+  for (const [n, shown] of cases) assert.equal(app.moneyK(n), shown, String(n));
+});
+
+test('the comparison shows cheap chips as $x.xk', () => {
+  const g = loadedAtHome(steady(), { z20: 10, riptide: 10 });
+  const { app, rows } = comparison(g, 'travel');
+  for (const p of g.portIds.filter((x) => x !== g.home)) {
+    for (const id of ['z20', 'riptide']) {
+      const price = g.indicativePrice(p, id);
+      if (price >= 9_950) continue;
+      assert.match(rows[app.portName(p)][text.goods[id].short].text, /^\$\d\.\dk\*?$/, `${id} in ${p}`);
+    }
+  }
 });

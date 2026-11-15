@@ -195,7 +195,7 @@
 
   "compare": {
     "title": "Prices when you land (estimates)",
-    "legend": "Estimates, before the market's ups and downs. Underlined: the best price for that chip. *: its status changes before you land."
+    "legend": "Estimates, before the market's ups and downs. Amber: needs a license there. Red: banned there. Underlined: the best price for that chip. *: its status changes before you land."
   },
 
   "performance": {
