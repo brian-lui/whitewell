@@ -423,9 +423,9 @@
   },
 
   "endings": {
-    "fired": "{strikes} missed quarters in a row. A meeting called \"Quick sync\" turns out to be HR and someone from Legal. Security walks you to the lobby.",
-    "resigned": "You resign and join a startup. Your {company} stock keeps vesting. Mostly.",
-    "ceoOusted": "The doom meter hits {doomMax}. Under pressure from the Washington natsec blob, {company}'s CEO resigns \"to spend more time with family\". The new CEO's first memo shuts down Asia-Pacific operations. Your badge stops working at noon."
+    "fired": "{strikes} missed quarters in a row. A meeting called \"Quick sync\" turns out to be HR and someone from Legal. Security escorts you out.",
+    "resigned": "You resign and join a startup. Your {company} stock keeps going up. Hopefully.",
+    "ceoOusted": "Under pressure from the Washington natsec blob, {company}'s CEO is alleged to have a dozen affairs and resigns \"for personal reasons\". The new CEO's first memo says that procurement is now managed from HQ. Your badge stops working at noon."
   },
 
   "ratings": {
