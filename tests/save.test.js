@@ -1,39 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { FakeNode, store } from './browser.js';
 import { createGame } from '../js/engine.js';
 import { App } from '../js/ui.js';
 import { quietConfig, loadText } from './helpers.js';
-
-// Just enough of a browser for the UI to render into. Hidden nodes show no text.
-class FakeNode {
-  constructor(tag) { this.tagName = tag.toUpperCase(); this.childNodes = []; this.className = ''; this.hidden = false; this.value = ''; }
-  setAttribute() {}
-  addEventListener() {}
-  append(...nodes) { this.childNodes.push(...nodes); }
-  replaceChildren(...nodes) { this.childNodes = nodes; }
-  focus() {}
-  select() {}
-  get textContent() {
-    return this.hidden ? '' : this.childNodes.map((c) => (typeof c === 'string' ? c : c.textContent)).join(' ');
-  }
-}
-
-// Browser storage that can be switched to fail, like a full or disabled localStorage.
-const store = {
-  data: new Map(),
-  broken: false,
-  getItem(key) { return this.data.has(key) ? this.data.get(key) : null; },
-  setItem(key, value) {
-    if (this.broken) throw new Error('QuotaExceededError: the quota has been exceeded');
-    this.data.set(key, String(value));
-  },
-  removeItem(key) { this.data.delete(key); },
-};
-
-globalThis.Node = FakeNode;
-globalThis.document = { title: '', createElement: (tag) => new FakeNode(tag), addEventListener() {} };
-globalThis.window = { confirm: () => true };
-globalThis.localStorage = store;
 
 const config = quietConfig();
 const text = loadText();

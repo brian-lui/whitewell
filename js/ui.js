@@ -492,7 +492,8 @@ export class App {
     const g = this.game;
     const s = g.state;
     return {
-      body: [el('h2', {}, this.t('load.title')), this.p(this.t('load.info', { free: g.holdFree(), capacity: s.capacity }), 'dim')],
+      body: [el('h2', {}, this.t('load.title')), this.p(this.t('load.info', { free: g.holdFree(), capacity: s.capacity }), 'dim'),
+        this.destinationComparison()],
       actions: [
         ...g.goodIds.map((id) => ({
           option: true, disabled: !s.warehouse[id] || g.holdFree() <= 0,
@@ -535,26 +536,75 @@ export class App {
     return worst > 0 ? LEGALITY_ORDER[worst] : null;
   }
 
+  // The foreign cities side by side, as you'd find them on landing: BIS checks, and for
+  // each chip you carry (or, at home, could load) its estimated price and status there.
+  // Abroad with nothing on board there's nothing to compare.
+  destinationComparison() {
+    const g = this.game;
+    const s = g.state;
+    if (!g.atHome && !g.holdUsed()) return null;
+    const has = (id) => s.hold[id] > 0 || (g.atHome && s.warehouse[id] > 0);
+    const goods = g.goodIds.some(has) ? g.goodIds.filter(has) : g.goodIds;
+    const carrying = g.holdUsed() > 0;
+    const cities = g.portIds.filter((p) => p !== g.home && p !== s.port).map((port) => {
+      const month = g.arrivalMonth(port);
+      const prices = Object.fromEntries(goods.map((id) => [id, g.indicativePrice(port, id, month)]));
+      return { port, month, prices, closed: g.isClosed(port, month) };
+    });
+    const best = Object.fromEntries(goods.map((id) => [id, Math.max(...cities.filter((c) => !c.closed).map((c) => c.prices[id]))]));
+    const blank = () => el('td', { class: 'num dim' }, '·');
+    const rows = cities.map(({ port, month, prices, closed }) => {
+      const level = g.customsLevel(port, month);
+      return el('tr', {},
+        el('td', {}, this.portName(port)),
+        el('td', { class: `customs ${level}` }, this.t(`customsLevels.${level}`)),
+        goods.map((id) => {
+          if (closed) return blank();
+          const leg = g.legality(port, id, month);
+          const mark = leg !== g.legality(port, id) ? '*' : ''; // changes while you're on the way
+          return el('td', { class: `num ${leg}${prices[id] === best[id] ? ' best' : ''}` },
+            `${this.moneyShort(prices[id])} ${this.t(`regulations.short.${leg}`)}${mark}`);
+        }),
+        carrying && (closed ? blank()
+          : el('td', { class: 'num' }, this.moneyShort(goods.reduce((sum, id) => sum + s.hold[id] * prices[id], 0)))));
+    });
+    return [
+      this.p(this.t('compare.title'), 'kicker'),
+      el('div', { class: 'scroll' }, el('table', { class: 'regs compare' },
+        el('thead', {}, el('tr', {},
+          el('th', {}, this.t('ui.table.port')),
+          el('th', {}, this.t('ui.table.customs')),
+          goods.map((id) => el('th', { class: 'num' }, this.text.goods?.[id]?.short || this.goodName(id))),
+          carrying && el('th', { class: 'num' }, this.t('ui.table.cargoValue')))),
+        el('tbody', {}, rows))),
+      this.p(this.t('compare.legend'), 'dim small'),
+    ];
+  }
+
+  // Each city as you'll find it when you land there.
   view_travel() {
     const g = this.game;
     const s = g.state;
     const label = (p) => {
       if (p === g.home) return this.t('travel.home', { port: p });
-      const risk = this.cargoRisk(p);
+      const month = g.arrivalMonth(p);
+      const risk = this.cargoRisk(p, month);
       const changed = risk !== this.cargoRisk(p, s.month); // known to change while you're on the way
-      const base = this.t('travel.option', { port: p, level: this.t(`customsLevels.${g.customsLevel(p)}`) });
-      if (changed) return `${base} ${this.t(`travel.riskOnArrival.${risk || 'legal'}`)}`;
-      return risk ? `${base} ${this.t(`travel.risk.${risk}`)}` : base;
+      let line = this.t('travel.option', { port: p, level: this.t(`customsLevels.${g.customsLevel(p, month)}`) });
+      if (g.isClosed(p) && !g.isClosed(p, month)) line += ` ${this.t('travel.reopens')}`;
+      if (changed) return `${line} ${this.t(`travel.riskOnArrival.${risk || 'legal'}`)}`;
+      return risk ? `${line} ${this.t(`travel.risk.${risk}`)}` : line;
     };
     // Home first when you're away: it's the usual next move.
     const order = g.portIds.filter((p) => p !== s.port).sort((a, b) => (b === g.home) - (a === g.home));
     return {
       body: [el('h2', {}, this.t('travel.title')), this.p(this.t('travel.cost', { cost: g.freightCost() })),
-        g.holdUsed() > 0 && this.p(this.t('travel.riskNote'), 'dim small')],
+        this.destinationComparison(),
+        this.p(this.t('travel.arrivalNote'), 'dim small')],
       actions: [
         ...order.map((p) => ({
           option: true,
-          disabled: g.isClosed(p),
+          disabled: g.isClosed(p, g.arrivalMonth(p)),
           label: label(p),
           run: () => this.apply(g.travel(p), null, { name: 'port' }),
         })),

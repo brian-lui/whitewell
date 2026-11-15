@@ -8,21 +8,27 @@ import { fileURLToPath } from 'node:url';
 import { createGame } from '../js/engine.js';
 
 // What a player can work out from the Regulations and News screens: the price
-// in that city next month, before the random swing.
+// in that city when they'd land there, before the random swing. Rules and
+// events are counted as they'll be by then.
 function expectedPrice(g, port, good) {
   const p = g.portsById[port];
   const lf = g.config.legalityPriceFactor;
-  let v = g.currentBase(good, g.state.month + 1) * (p.prices?.[good] ?? 1);
-  v *= lf[g.legality(port, good)] / lf[g.portLegality(port, good)];
-  for (const e of g.effectsFor('price', port, good)) v *= e.value;
+  const month = g.arrivalMonth(port);
+  let v = g.currentBase(good, month) * (p.prices?.[good] ?? 1);
+  v *= lf[g.legality(port, good, month)] / lf[g.portLegality(port, good)];
+  for (const e of g.effectsFor('price', port, good)) {
+    if (e.monthsLeft <= month - g.state.month) continue; // runs out on the way
+    v *= e.value;
+  }
   return v;
 }
 
 // Expected customs loss per unit of this chip flown into that city.
 function expectedLoss(g, port, good, value) {
-  const leg = g.legality(port, good);
+  const month = g.arrivalMonth(port);
+  const leg = g.legality(port, good, month);
   if (leg === 'legal') return 0;
-  const p = g.inspectionChance(port);
+  const p = g.inspectionChance(port, month);
   const mult = g.climateLevel().penaltyMultiplier;
   const c = g.config.customs;
   if (leg === 'restricted') return p * value * c.dutyRate * mult;
@@ -42,8 +48,11 @@ export const BOTS = {
   reckless: { restricted: true, smuggleUpTo: 99, riskWeight: 0, bribeAbove: 0 },
 };
 
-function allowed(g, bot, port, good) {
-  const leg = g.legality(port, good);
+// Whether the bot's strategy lets it sell this chip in that city: under the rules
+// in force by the time it lands (or in the given month), and today's climate,
+// since nobody knows where the doom meter is going.
+function allowed(g, bot, port, good, month = g.arrivalMonth(port)) {
+  const leg = g.legality(port, good, month);
   if (leg === 'restricted') return bot.restricted;
   if (leg === 'contraband') return g.climateIndex() <= bot.smuggleUpTo;
   return true;
@@ -65,7 +74,7 @@ function expectedMonthlyOutput(g) {
 // At home: pick a destination and the load that earns most there.
 function planTrip(g, bot) {
   let best = null;
-  for (const dest of g.openPorts()) {
+  for (const dest of g.openPorts(g.state.month + 1)) {
     if (dest === g.home) continue;
     let space = g.state.capacity;
     let value = -g.freightCost();
@@ -86,7 +95,7 @@ function planTrip(g, bot) {
   return best;
 }
 
-function homeTurn(g, bot) {
+export function homeTurn(g, bot) {
   const s = g.state;
   for (const id of g.goodIds) if (s.hold[id]) g.unload(id, Math.min(s.hold[id], g.warehouseFree()));
   const plan = planTrip(g, bot);
@@ -111,26 +120,31 @@ function homeTurn(g, bot) {
   return plan.dest;
 }
 
-function abroadTurn(g, bot) {
+export function abroadTurn(g, bot) {
   const s = g.state;
   const mustSell = g.monthsLeftInQuarter() === 1 && g.net() < s.target;
+  // Chips the strategy won't sell here (a rule started on the way, the ship landed
+  // somewhere else, the climate heated up) stay on board. They go home, which is
+  // always fine and as good (the flight is free and instant), or along to a city
+  // that allows them if other cargo is worth carrying on.
+  const stuck = g.goodIds.filter((id) => s.hold[id] && !allowed(g, bot, s.port, id, s.month));
   // Keep chips that another city pays much more for; sell the rest here.
   let best = { port: g.home, keep: [], extra: 0 };
   if (!mustSell) {
-    for (const p of g.openPorts()) {
-      if (p === s.port || p === g.home) continue;
+    for (const p of g.openPorts(s.month + 1)) {
+      if (p === s.port || p === g.home || stuck.some((id) => !allowed(g, bot, p, id))) continue;
       const keep = [];
       let extra = -g.freightCost();
       for (const id of g.goodIds) {
         const n = s.hold[id];
-        if (!n) continue;
+        if (!n || stuck.includes(id)) continue;
         const v = unitValue(g, bot, p, id);
         if (v > g.price(id) * 1.25) { keep.push(id); extra += n * (v - g.price(id)); }
       }
       if (keep.length && extra > best.extra) best = { port: p, keep, extra };
     }
   }
-  for (const id of g.goodIds) if (s.hold[id] && !best.keep.includes(id)) g.sell(id, s.hold[id]);
+  for (const id of g.goodIds) if (s.hold[id] && !stuck.includes(id) && !best.keep.includes(id)) g.sell(id, s.hold[id]);
   return best.port;
 }
 

@@ -73,7 +73,8 @@
       "quarter": "Quarter",
       "net": "Net revenue",
       "target": "Target",
-      "bonus": "Bonus"
+      "bonus": "Bonus",
+      "cargoValue": "Your cargo"
     },
     "tips": {
       "heat": "Scrutiny: how closely BIS watches you personally. Scrutiny rises when you're caught trying to ship banned chips, and even more if your fixer fails. The higher it is, the more often BIS checks you, everywhere, and the less your fixers can do. Now {heat} of {heatMax}.",
@@ -188,7 +189,13 @@
       "restricted": "! some cargo will need a license by the time you land",
       "contraband": "! some cargo will be BANNED by the time you land"
     },
-    "riskNote": "Cargo warnings are for when you land: they count announced export rules and temporary changes that run out on the way. New events on the way can still change things."
+    "reopens": "(closed now, but it reopens before you land)",
+    "arrivalNote": "Each city is shown as you'll find it when you land, allowing for fading scrutiny, announced export rules and temporary changes that run out on the way. New events on the way can still change things."
+  },
+
+  "compare": {
+    "title": "Prices when you land (estimates)",
+    "legend": "Estimates, before the market's ups and downs. Underlined: the best price for that chip. *: its status changes before you land."
   },
 
   "performance": {

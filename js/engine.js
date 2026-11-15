@@ -201,15 +201,24 @@ export class Game {
   // The month you'd land in that city if you set off now: a trip out takes a month,
   // flying home is instant.
   arrivalMonth(port) { return port === this.home ? this.state.month : this.state.month + 1; }
+  // Whether an effect will still be running in that month: the same rule as legality().
+  _lasts(e, month) {
+    const ahead = month - this.state.month;
+    return ahead <= 0 || e.monthsLeft > ahead;
+  }
 
-  inspectionChance(port) {
-    const base = this.portsById[port].inspection + this.state.heat * this.config.heat.inspectionPerPoint;
-    const mod = this.effectsFor('inspection', port).reduce((sum, e) => sum + e.value, 0);
+  // Pass a later month for the chance then, as far as is known now: heat cools by
+  // heat.monthlyDecay a month, and only the events that won't have run out count.
+  inspectionChance(port, month = this.state.month) {
+    const ahead = month - this.state.month;
+    const heat = ahead > 0 ? Math.max(0, this.state.heat - ahead * this.config.heat.monthlyDecay) : this.state.heat;
+    const base = this.portsById[port].inspection + heat * this.config.heat.inspectionPerPoint;
+    const mod = this.effectsFor('inspection', port).filter((e) => this._lasts(e, month)).reduce((sum, e) => sum + e.value, 0);
     return clamp(base + mod, 0, this.config.customs.maxChance);
   }
-  customsLevel(port) {
-    if (this.isClosed(port)) return 'closed';
-    const c = this.inspectionChance(port);
+  customsLevel(port, month = this.state.month) {
+    if (this.isClosed(port, month)) return 'closed';
+    const c = this.inspectionChance(port, month);
     if (c <= 0) return 'none';
     const idx = this.config.customs.levelThresholds.findIndex((t) => c < t);
     return ['lax', 'normal', 'strict', 'crackdown'][idx === -1 ? 3 : idx];
@@ -223,8 +232,10 @@ export class Game {
     const idx = this.config.customs.bribeHintThresholds.findIndex((t) => chance < t);
     return idx === -1 ? this.config.customs.bribeHintThresholds.length : idx;
   }
-  isClosed(port) { return this.effectsFor('closure', port).some((e) => e.port === port); }
-  openPorts() { return this.portIds.filter((p) => !this.isClosed(p)); }
+  isClosed(port, month = this.state.month) {
+    return this.effectsFor('closure', port).some((e) => e.port === port && this._lasts(e, month));
+  }
+  openPorts(month = this.state.month) { return this.portIds.filter((p) => !this.isClosed(p, month)); }
   freightCost() {
     const { costBase, costPerUnit } = this.config.freight;
     const mult = this.effectsFor('freightCost').reduce((m, e) => m * e.value, 1);
@@ -266,15 +277,28 @@ export class Game {
 
   // ---------- prices ----------
   generatePrices() {
-    const port = this.portsById[this.state.port];
-    const lf = this.config.legalityPriceFactor;
+    const port = this.state.port;
     for (const g of this.config.goods) {
-      let p = this.currentBase(g.id) * (port.prices?.[g.id] ?? 1);
-      p *= lf[this.legality(port.id, g.id)] / lf[this.portLegality(port.id, g.id)];
+      let p = this._listPrice(port, g.id);
       p *= 1 + g.volatility * (2 * this.random() - 1);
-      for (const e of this.effectsFor('price', port.id, g.id)) p *= e.value;
+      for (const e of this.effectsFor('price', port, g.id)) p *= e.value;
       this.state.prices[g.id] = Math.max(1, Math.round(p));
     }
+  }
+  // A chip's price in that city before the random swing and price events: the list
+  // price that month, the city's demand, and the premium for its rules then.
+  _listPrice(port, good, month = this.state.month) {
+    const lf = this.config.legalityPriceFactor;
+    return this.currentBase(good, month) * (this.portsById[port].prices?.[good] ?? 1)
+      * (lf[this.legality(port, good, month)] / lf[this.portLegality(port, good)]);
+  }
+  // What a chip should fetch in that city when you'd land there, as far as is known
+  // now: price events still running then count, but not the market's random swing,
+  // spikes and crashes, or events that haven't happened yet. An estimate.
+  indicativePrice(port, good, month = this.arrivalMonth(port)) {
+    let p = this._listPrice(port, good, month);
+    for (const e of this.effectsFor('price', port, good)) if (this._lasts(e, month)) p *= e.value;
+    return Math.max(1, Math.round(p));
   }
 
   // ---------- player actions ----------
@@ -379,7 +403,9 @@ export class Game {
     const g = this._guard(); if (g) return g;
     if (!this.portsById[dest]) return fail('errors.invalidPort');
     if (dest === this.state.port) return fail('errors.alreadyHere');
-    if (this.isClosed(dest)) return fail('errors.portClosed', { port: dest });
+    // A closure that ends before you'd land doesn't stop you. One that starts on the
+    // way diverts you below.
+    if (this.isClosed(dest, this.arrivalMonth(dest))) return fail('errors.portClosed', { port: dest });
     if (dest === this.home) return this._returnHome();
 
     const s = this.state;

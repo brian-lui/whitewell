@@ -101,6 +101,7 @@ tr.here td:first-child::before { content: "▸ "; }
 .legal { color: var(--fg); }
 .restricted { color: var(--warn); }
 .contraband { color: var(--danger); font-weight: bold; }
+td.best { text-decoration: underline; text-underline-offset: 3px; }
 .customs.strict, .customs.crackdown { color: var(--warn); }
 .customs.closed { color: var(--danger); }
 .customs.lax, .customs.none { color: var(--accent); }
